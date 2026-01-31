@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WeatherX | Advanced Intelligence Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="description" content="Advanced Weather Intelligence Dashboard with AI-powered insights">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+<link rel="stylesheet" href="css/dashboard.css"/>
+</head>
+
+<body>
+
+<!-- ================= LOADING OVERLAY ================= -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner-container">
+    <div class="spinner"></div>
+    <div class="spinner-glow"></div>
+  </div>
+  <p class="loading-text">Initializing Weather Intelligence...</p>
+  <div class="loading-bar">
+    <div class="loading-progress" id="loadingProgress"></div>
+  </div>
+</div>
+
+<!-- ================= HEADER ================= -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-icon">
+        <img src="assets/logo.png" alt="logo" class="logo-icon" loading="lazy">
+    </div>
+    <div class="logo-content">
+      <h1>WeatherX</h1>
+      <span class="tagline">Advanced Intelligence</span>
+    </div>
+  </div>
+
+  <div class="actions">
+  <!-- GPS -->
+  <button onclick="getLocation()" class="action-btn gps-btn" aria-label="Get current location" title="Use GPS Location">
+    <span class="material-symbols-outlined btn-icon">my_location</span>
+    <span class="btn-text">GPS</span>
+  </button>
+
+  <!-- Unit Toggle -->
+  <button onclick="toggleUnit()" class="action-btn unit-btn" id="unitBtn" aria-label="Toggle temperature unit" title="Toggle °C/°F">
+    <span class="material-symbols-outlined btn-icon">device_thermostat</span>
+    <span class="btn-text" id="unitText">°F</span>
+  </button>
+
+  <!-- Theme -->
+  <button onclick="toggleTheme()" class="action-btn theme-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle Light/Dark Mode">
+    <span class="material-symbols-outlined btn-icon">dark_mode</span>
+    <span class="btn-text">Theme</span>
+  </button>
+
+  <!-- Settings -->
+  <button onclick="showSettings()" class="action-btn settings-btn" aria-label="Settings" title="Settings">
+    <span class="material-symbols-outlined btn-icon">settings</span>
+    <span class="btn-text">Settings</span>
+  </button>
+
+  <!-- Logout -->
+  <button onclick="logout()" class="action-btn logout-btn" aria-label="Logout" title="Logout">
+    <span class="material-symbols-outlined btn-icon">logout</span>
+    <span class="btn-text">Logout</span>
+  </button>
+</div>
+
+</header>
+
+<!-- ================= SEARCH ================= -->
+<section class="search-section">
+  <div class="search-wrapper">
+    <div class="search-icon">🔍</div>
+    <input 
+      id="cityInput" 
+      type="text" 
+      placeholder="Search city, zipcode, or coordinates..." 
+      aria-label="Search location"
+      autocomplete="off"
+    >
+    <button onclick="clearSearch()" class="clear-btn" id="clearBtn" aria-label="Clear search" title="Clear">✕</button>
+    <button onclick="fetchWeatherByCity()" class="search-btn" aria-label="Search" title="Search">
+      <span>Search</span>
+    </button>
+  </div>
+  <div class="search-suggestions" id="searchSuggestions"></div>
+</section>
+
+<!-- ================= ALERT ================= -->
+<div class="alert-container">
+  <div class="alert" id="alertBox" role="alert" aria-live="polite"></div>
+</div>
+
+<!-- ================= WEATHER ALERTS ================= -->
+<section class="weather-alerts" id="weatherAlerts" style="display: none;">
+  <div class="alert-header">
+    <span class="alert-icon">⚠️</span>
+    <h3>Weather Alerts</h3>
+  </div>
+  <div class="alerts-content" id="alertsContent"></div>
+</section>
+
+<!-- ================= MAIN WEATHER CARD ================= -->
+<section class="weather-main-card" aria-label="Current weather">
+  <div class="weather-left">
+    <div class="location-badge">
+      <span class="location-icon">📍</span>
+      <h2 id="cityName">London</h2>
+    </div>
+    <div class="location-info">
+      <span id="country">UK</span>
+      <span class="separator">•</span>
+      <span id="localTime">--:--</span>
+      <span class="separator">•</span>
+      <span id="timezone">GMT</span>
+    </div>
+    <p id="condition" class="condition">Partly Cloudy</p>
+    <h1 id="temp" class="temperature">
+      <span class="temp-value">15</span>
+      <span class="temp-unit">°C</span>
+    </h1>
+    <p id="feelsLike" class="feels-like">Feels like <span class="highlight">13°C</span></p>
+    <div class="weather-extras">
+      <div class="extra-item">
+        <span class="extra-label">High</span>
+        <span class="extra-value" id="tempMax">18°</span>
+      </div>
+      <div class="extra-item">
+        <span class="extra-label">Low</span>
+        <span class="extra-value" id="tempMin">12°</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="weather-right">
+    <div class="weather-icon-container">
+      <img 
+        id="weatherIcon" 
+        src="https://cdn.weatherapi.com/weather/128x128/day/116.png" 
+        alt="Weather condition icon"
+        loading="lazy"
+      >
+    </div>
+    <div class="air-quality" id="airQuality" style="display: none;">
+      <span class="aqi-label">Air Quality</span>
+      <span class="aqi-value" id="aqiValue">Good</span>
+    </div>
+    <p class="last-updated" id="lastUpdated">
+      <span class="update-icon">🔄</span>
+      <span id="updateTime">Updated just now</span>
+    </p>
+  </div>
+</section>
+
+<!-- ================= QUICK STATS ================= -->
+<section class="weather-stats" aria-label="Weather statistics">
+  <div class="stat-box" data-stat="humidity">
+    <div class="stat-icon">💧</div>
+    <div class="stat-content">
+      <h3 id="humidity" class="stat-value">65%</h3>
+      <p class="stat-label">Humidity</p>
+      <div class="stat-bar">
+        <div class="stat-fill" id="humidityBar" style="width: 65%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-box" data-stat="wind">
+    <div class="stat-icon">💨</div>
+    <div class="stat-content">
+      <h3 id="wind" class="stat-value">12 km/h</h3>
+      <p class="stat-label">Wind Speed</p>
+      <p class="stat-detail" id="windDir">NE</p>
+    </div>
+  </div>
+
+  <div class="stat-box" data-stat="pressure">
+    <div class="stat-icon">🌡️</div>
+    <div class="stat-content">
+      <h3 id="pressure" class="stat-value">1013</h3>
+      <p class="stat-label">Pressure (hPa)</p>
+      <p class="stat-detail" id="pressureTrend">Stable</p>
+    </div>
+  </div>
+
+  <div class="stat-box" data-stat="visibility">
+    <div class="stat-icon">👁️</div>
+    <div class="stat-content">
+      <h3 id="visibility" class="stat-value">10</h3>
+      <p class="stat-label">Visibility (km)</p>
+    </div>
+  </div>
+
+  <div class="stat-box" data-stat="clouds">
+    <div class="stat-icon">☁️</div>
+    <div class="stat-content">
+      <h3 id="clouds" class="stat-value">40%</h3>
+      <p class="stat-label">Cloud Cover</p>
+      <div class="stat-bar">
+        <div class="stat-fill" id="cloudsBar" style="width: 40%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-box" data-stat="uv">
+    <div class="stat-icon">☀️</div>
+    <div class="stat-content">
+      <h3 id="uv" class="stat-value">5</h3>
+      <p class="stat-label">UV Index</p>
+      <p class="stat-detail" id="uvRisk">Moderate</p>
+    </div>
+  </div>
+
+  <div class="stat-box" data-stat="precipitation">
+    <div class="stat-icon">🌧️</div>
+    <div class="stat-content">
+      <h3 id="precipitation" class="stat-value">0</h3>
+      <p class="stat-label">Precip (mm)</p>
+      <p class="stat-detail" id="precipChance">0%</p>
+    </div>
+  </div>
+
+  <div class="stat-box" data-stat="dewpoint">
+    <div class="stat-icon">💦</div>
+    <div class="stat-content">
+      <h3 id="dewpoint" class="stat-value">10°</h3>
+      <p class="stat-label">Dew Point</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOURLY FORECAST ================= -->
+<section class="hourly-section" aria-label="24-hour forecast">
+  <div class="section-header">
+    <h2 class="section-title">24-Hour Forecast</h2>
+    <button class="view-toggle" onclick="toggleHourlyView()" id="hourlyViewBtn">
+      <span>Detailed View</span>
+    </button>
+  </div>
+  <div class="hourly-scroll" id="hourlyForecast"></div>
+</section>
+
+<!-- ================= DAILY FORECAST ================= -->
+<section class="daily-section" aria-label="7-day forecast">
+  <div class="section-header">
+    <h2 class="section-title">7-Day Forecast</h2>
+  </div>
+  <div class="daily-grid" id="dailyForecast"></div>
+</section>
+
+<!-- ================= SUN & MOON ================= -->
+<section class="sun-section" aria-label="Sun and moon times">
+  <h2 class="section-title">Astronomical Data</h2>
+  <div class="sun-container">
+    <div class="sun-visual">
+      <div class="sun-arc" id="sunArc">
+        <div class="sun-marker" id="sunMarker">☀️</div>
+      </div>
+      <div class="horizon-line"></div>
+    </div>
+    <div class="sun-times">
+      <div class="sun-item">
+        <div class="sun-icon">🌅</div>
+        <p class="sun-label">Sunrise</p>
+        <p class="sun-time" id="sunrise">--:--</p>
+      </div>
+      <div class="sun-item">
+        <div class="sun-icon">☀️</div>
+        <p class="sun-label">Solar Noon</p>
+        <p class="sun-time" id="solarNoon">--:--</p>
+      </div>
+      <div class="sun-item">
+        <div class="sun-icon">🌇</div>
+        <p class="sun-label">Sunset</p>
+        <p class="sun-time" id="sunset">--:--</p>
+      </div>
+      <div class="sun-item">
+        <div class="sun-icon">🌙</div>
+        <p class="sun-label">Moonrise</p>
+        <p class="sun-time" id="moonrise">--:--</p>
+      </div>
+      <div class="sun-item">
+        <div class="sun-icon" id="moonPhaseIcon">🌕</div>
+        <p class="sun-label">Moon Phase</p>
+        <p class="sun-time" id="moonPhase">Full Moon</p>
+      </div>
+      <div class="sun-item">
+        <div class="sun-icon">🌑</div>
+        <p class="sun-label">Moonset</p>
+        <p class="sun-time" id="moonset">--:--</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MAP ================= -->
+<section class="map-section" aria-label="Weather map">
+  <div class="section-header">
+    <h2 class="section-title">Interactive Map</h2>
+    <div class="map-controls">
+      <button class="map-layer-btn active" onclick="changeMapLayer('standard')" data-layer="standard">Standard</button>
+      <button class="map-layer-btn" onclick="changeMapLayer('satellite')" data-layer="satellite">Satellite</button>
+      <button class="map-layer-btn" onclick="changeMapLayer('terrain')" data-layer="terrain">Terrain</button>
+    </div>
+  </div>
+  <div id="map" aria-label="Interactive map"></div>
+</section>
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- ================= CHARTS ================= -->
+<section class="charts-section" aria-label="Weather analytics">
+  <div class="section-header">
+    <h2 class="section-title">Weather Analytics</h2>
+    <div class="chart-period-selector">
+      <button class="period-btn active" onclick="changeChartPeriod('5day')" data-period="5day">5 Days</button>
+      <button class="period-btn" onclick="changeChartPeriod('hourly')" data-period="hourly">24 Hours</button>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-container">
+      <div class="chart-header">
+        <p class="chart-title">Temperature Trend</p>
+        <p class="chart-subtitle" id="tempChartSubtitle">5-Day Average</p>
+      </div>
+      <canvas id="tempChart" role="img" aria-label="Temperature trend chart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+      <div class="chart-header">
+        <p class="chart-title">Humidity & Precipitation</p>
+        <p class="chart-subtitle">Combined Analysis</p>
+      </div>
+      <canvas id="humidityChart" role="img" aria-label="Humidity levels chart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+      <div class="chart-header">
+        <p class="chart-title">Weather Conditions</p>
+        <p class="chart-subtitle">Distribution</p>
+      </div>
+      <canvas id="conditionChart" role="img" aria-label="Weather conditions chart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+      <div class="chart-header">
+        <p class="chart-title">Wind Speed & Direction</p>
+        <p class="chart-subtitle">5-Day Forecast</p>
+      </div>
+      <canvas id="windChart" role="img" aria-label="Wind speed chart"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WEATHER INSIGHTS ================= -->
+<section class="insights-section" aria-label="Weather insights">
+  <h2 class="section-title">AI Weather Insights</h2>
+  <div class="insights-grid" id="insightsGrid">
+    <div class="insight-card">
+      <div class="insight-icon">🤖</div>
+      <h3>Analyzing weather patterns...</h3>
+      <p>Loading intelligent insights</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SETTINGS MODAL ================= -->
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Settings</h2>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-group">
+        <label class="setting-label">
+          <span>Auto-refresh weather data</span>
+          <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">
+          <span>Enable notifications</span>
+          <input type="checkbox" id="notifications" onchange="toggleNotifications()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">
+          <span>Show wind in mph</span>
+          <input type="checkbox" id="windMph" onchange="toggleWindUnit()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-group">
+        <label for="refreshInterval">Refresh interval (minutes)</label>
+        <select id="refreshInterval" onchange="updateRefreshInterval()">
+          <option value="5">5 minutes</option>
+          <option value="10" selected>10 minutes</option>
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <div class="footer-content">
+    <p>© 2026 WeatherX | Created By Aditya Raj Pandey</p>
+
+    <div class="footer-links">
+      <a href="#" onclick="showAbout()">About</a>
+      <a href="#" onclick="showPrivacy()">Privacy</a>
+      <a href="#" onclick="showTerms()">Terms</a>
+    </div>
+
+    <div class="footer-social">
+      <a href="https://github.com/Aditya-2215" target="_blank" class="social-btn github">
+        <i class="fab fa-github"></i> GitHub
+      </a>
+      <a href="https://portfolio-adityaraj.vercel.app/" target="_blank" class="social-btn portfolio">
+        <i class="fas fa-user"></i> Portfolio
+      </a>
+    </div>
+  </div>
+</footer>
+
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Dashboard Script -->
+<script src="js/dashboard.js"></script>
+
+</body>
+</html>
